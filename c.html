@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线游戏网站</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+        }
+
+        nav {
+            background-color: #444;
+            padding: 0.5rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .search-bar {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .search-bar input {
+            padding: 0.5rem;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .category-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .game-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .game-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .game-card h3 {
+            margin: 0.5rem 0;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>在线游戏网站</h1>
+        <nav>
+            <ul>
+                <li><a href="#home">首页</a></li>
+                <li><a href="#popular">热门游戏</a></li>
+                <li><a href="#new">最新游戏</a></li>
+                <li><a href="#categories">游戏分类</a></li>
+                <li><a href="#favorites">我的收藏</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="search-bar">
+        <input type="text" placeholder="搜索游戏...">
+    </div>
+
+    <div class="categories">
+        <button class="category-btn">动作</button>
+        <button class="category-btn">冒险</button>
+        <button class="category-btn">益智</button>
+        <button class="category-btn">策略</button>
+        <button class="category-btn">体育</button>
+    </div>
+
+    <div class="games-grid">
+        <!-- 游戏卡片示例 -->
+        <div class="game-card">
+            <img src="game1.jpg" alt="打砖块">
+            <h3>打砖块</h3>
+            <p>经典街机游戏</p>
+            <button onclick="window.location.href='b.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game2.jpg" alt="贪吃蛇">
+            <h3>贪吃蛇</h3>
+            <p>经典休闲游戏</p>
+            <button onclick="window.location.href='snake.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game3.jpg" alt="2048">
+            <h3>2048</h3>
+            <p>数字益智游戏</p>
+            <button onclick="window.location.href='2048.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game4.jpg" alt="俄罗斯方块">
+            <h3>俄罗斯方块</h3>
+            <p>经典方块游戏</p>
+            <button onclick="window.location.href='tetris.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game5.jpg" alt="记忆翻牌">
+            <h3>记忆翻牌</h3>
+            <p>考验记忆力的游戏</p>
+            <button onclick="window.location.href='memory.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game6.jpg" alt="飞机射击">
+            <h3>飞机射击</h3>
+            <p>经典射击游戏</p>
+            <button onclick="window.location.href='shooter.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game7.jpg" alt="扫雷">
+            <h3>扫雷</h3>
+            <p>经典益智游戏</p>
+            <button onclick="window.location.href='minesweeper.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game8.jpg" alt="五子棋">
+            <h3>五子棋</h3>
+            <p>经典棋类游戏</p>
+            <button onclick="window.location.href='gomoku.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game9.jpg" alt="弹球">
+            <h3>弹球</h3>
+            <p>经典街机游戏</p>
+            <button onclick="window.location.href='pong.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game10.jpg" alt="跳跃平台">
+            <h3>跳跃平台</h3>
+            <p>经典冒险游戏</p>
+            <button onclick="window.location.href='platformer.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game11.jpg" alt="数独">
+            <h3>数独</h3>
+            <p>经典数字游戏</p>
+            <button onclick="window.location.href='sudoku.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game12.jpg" alt="拼图">
+            <h3>拼图</h3>
+            <p>图片拼图游戏</p>
+            <button onclick="window.location.href='puzzle.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game13.jpg" alt="赛车">
+            <h3>赛车</h3>
+            <p>经典赛车游戏</p>
+            <button onclick="window.location.href='racing.html'">开始游戏</button>
+        </div>
+        <div class="game-card">
+            <img src="game14.jpg" alt="迷宫">
+            <h3>迷宫</h3>
+            <p>迷宫探索游戏</p>
+            <button onclick="window.location.href='maze.html'">开始游戏</button>
+        </div>
+        <!-- 更多游戏卡片 -->
+    </div>
+
+    <footer>
+        <p>版权所有 &copy; 2024 在线游戏网站</p>
+    </footer>
+
+    <script>
+        // 游戏搜索功能
+        document.querySelector('.search-bar input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const gameCards = document.querySelectorAll('.game-card');
+            
+            gameCards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // 分类筛选功能
+        document.querySelectorAll('.category-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const category = this.textContent;
+                // 这里添加分类筛选逻辑
+                alert(`已选择 ${category} 类别`);
+            });
+        });
+
+        // 游戏启动功能
+        function playGame(gameId) {
+            // 这里添加游戏启动逻辑
+            alert(`启动游戏: ${gameId}`);
+        }
+    </script>
+</body>
+</html>

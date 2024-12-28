@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独</title>
+    <style>
+        .game-container {
+            width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .grid {
+            display: inline-grid;
+            grid-template-columns: repeat(9, 50px);
+            gap: 1px;
+            background: #999;
+            padding: 1px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .cell.fixed {
+            background: #eee;
+            cursor: not-allowed;
+        }
+        .cell.selected {
+            background: #e3f2fd;
+        }
+        .cell.error {
+            color: red;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .numbers {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .number-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+        }
+        .block-boundary-right {
+            border-right: 2px solid #000;
+        }
+        .block-boundary-bottom {
+            border-bottom: 2px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>数独</h1>
+        <div class="grid" id="grid"></div>
+        <div class="numbers">
+            <button class="number-btn" onclick="selectNumber(1)">1</button>
+            <button class="number-btn" onclick="selectNumber(2)">2</button>
+            <button class="number-btn" onclick="selectNumber(3)">3</button>
+            <button class="number-btn" onclick="selectNumber(4)">4</button>
+            <button class="number-btn" onclick="selectNumber(5)">5</button>
+            <button class="number-btn" onclick="selectNumber(6)">6</button>
+            <button class="number-btn" onclick="selectNumber(7)">7</button>
+            <button class="number-btn" onclick="selectNumber(8)">8</button>
+            <button class="number-btn" onclick="selectNumber(9)">9</button>
+            <button class="number-btn" onclick="selectNumber(0)">清除</button>
+        </div>
+        <div class="controls">
+            <button onclick="window.location.href='c.html'">返回首页</button>
+            <button onclick="restartGame()">重新开始</button>
+            <button onclick="checkSolution()">检查答案</button>
+        </div>
+        <p>点击格子选择位置，然后点击数字填入</p>
+    </div>
+
+    <script>
+        let board = [];
+        let solution = [];
+        let fixed = [];
+        let selectedCell = null;
+
+        function createBoard() {
+            // 创建一个完整的数独解决方案
+            solution = generateSolution();
+            
+            // 创建初始游戏板，通过移除一些数字
+            board = JSON.parse(JSON.stringify(solution));
+            fixed = Array(9).fill().map(() => Array(9).fill(false));
+            
+            // 随机移除一些数字
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    if (Math.random() < 0.6) {
+                        board[i][j] = 0;
+                    } else {
+                        fixed[i][j] = true;
+                    }
+                }
+            }
+        }
+
+        function generateSolution() {
+            let grid = Array(9).fill().map(() => Array(9).fill(0));
+            fillGrid(grid);
+            return grid;
+        }
+
+        function fillGrid(grid) {
+            for (let i = 0; i < 81; i++) {
+                const row = Math.floor(i / 9);
+                const col = i % 9;
+                
+                if (grid[row][col] === 0) {
+                    for (let num = 1; num <= 9; num++) {
+                        if (isValid(grid, row, col, num)) {
+                            grid[row][col] = num;
+                            if (fillGrid(grid)) {
+                                return true;
+                            }
+                            grid[row][col] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function isValid(grid, row, col, num) {
+            // 检查行
+            for (let x = 0; x < 9; x++) {
+                if (grid[row][x] === num) return false;
+            }
+            
+            // 检查列
+            for (let x = 0; x < 9; x++) {
+                if (grid[x][col] === num) return false;
+            }
+            
+            // 检查3x3方格
+            const startRow = Math.floor(row / 3) * 3;
+            const startCol = Math.floor(col / 3) * 3;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (grid[i + startRow][j + startCol] === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function createGrid() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (j === 2 || j === 5) cell.classList.add('block-boundary-right');
+                    if (i === 2 || i === 5) cell.classList.add('block-boundary-bottom');
+                    if (fixed[i][j]) cell.classList.add('fixed');
+                    if (board[i][j] !== 0) cell.textContent = board[i][j];
+                    
+                    cell.addEventListener('click', () => selectCell(i, j));
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        function selectCell(row, col) {
+            if (fixed[row][col]) return;
+            
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.classList.remove('selected'));
+            
+            const index = row * 9 + col;
+            cells[index].classList.add('selected');
+            selectedCell = {row, col};
+        }
+
+        function selectNumber(num) {
+            if (!selectedCell) return;
+            
+            const {row, col} = selectedCell;
+            if (fixed[row][col]) return;
+            
+            board[row][col] = num;
+            createGrid();
+            
+            // 检查是否完成
+            if (isBoardFull() && checkSolution()) {
+                alert('恭喜你完成了数独！');
+            }
+        }
+
+        function isBoardFull() {
+            return board.every(row => row.every(cell => cell !== 0));
+        }
+
+        function checkSolution() {
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    if (board[i][j] !== solution[i][j]) {
+                        alert('还没有完成正确的解答，请继续尝试！');
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function restartGame() {
+            selectedCell = null;
+            createBoard();
+            createGrid();
+        }
+
+        // 初始化游戏
+        restartGame();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷宫游戏</title>
+    <style>
+        .game-container {
+            width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        canvas {
+            background: #fff;
+            margin: 20px 0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .timer {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>迷宫游戏</h1>
+        <div class="timer">用时: <span id="time">0</span>秒</div>
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+        <div class="controls">
+            <button onclick="window.location.href='c.html'">返回首页</button>
+            <button onclick="restartGame()">重新开始</button>
+        </div>
+        <p>使用方向键移动小球到达终点</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const CELL_SIZE = 30;
+        const ROWS = 20;
+        const COLS = 20;
+        
+        const player = {
+            x: 1,
+            y: 1,
+            size: CELL_SIZE - 4
+        };
+        
+        const end = {
+            x: COLS - 2,
+            y: ROWS - 2
+        };
+        
+        let maze = [];
+        let startTime;
+        let gameOver = false;
+        let timer;
+
+        function generateMaze() {
+            // 初始化迷宫，全部设为墙
+            maze = Array(ROWS).fill().map(() => Array(COLS).fill(1));
+            
+            function carve(x, y) {
+                maze[y][x] = 0;
+                
+                // 四个方向：上、右、下、左
+                const directions = [[0, -2], [2, 0], [0, 2], [-2, 0]];
+                shuffleArray(directions);
+                
+                for (const [dx, dy] of directions) {
+                    const newX = x + dx;
+                    const newY = y + dy;
+                    
+                    if (newX > 0 && newX < COLS - 1 && 
+                        newY > 0 && newY < ROWS - 1 && 
+                        maze[newY][newX] === 1) {
+                        maze[y + dy/2][x + dx/2] = 0;
+                        carve(newX, newY);
+                    }
+                }
+            }
+            
+            carve(1, 1);
+            maze[end.y][end.x] = 0;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制迷宫
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (maze[y][x] === 1) {
+                        ctx.fillStyle = '#000';
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, 
+                                   CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+            
+            // 绘制终点
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(end.x * CELL_SIZE, end.y * CELL_SIZE, 
+                        CELL_SIZE, CELL_SIZE);
+            
+            // 绘制玩家
+            ctx.fillStyle = '#f00';
+            ctx.beginPath();
+            ctx.arc(player.x * CELL_SIZE + CELL_SIZE/2, 
+                   player.y * CELL_SIZE + CELL_SIZE/2, 
+                   player.size/2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+            
+            if (newX >= 0 && newX < COLS && 
+                newY >= 0 && newY < ROWS && 
+                maze[newY][newX] === 0) {
+                player.x = newX;
+                player.y = newY;
+                
+                if (player.x === end.x && player.y === end.y) {
+                    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+                    gameOver = true;
+                    clearInterval(timer);
+                    alert(`恭喜你完成迷宫！用时：${timeSpent}秒`);
+                }
+            }
+            
+            drawMaze();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    movePlayer(1, 0);
+                    break;
+            }
+        });
+
+        function updateTimer() {
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('time').textContent = timeSpent;
+        }
+
+        function restartGame() {
+            player.x = 1;
+            player.y = 1;
+            gameOver = false;
+            clearInterval(timer);
+            startTime = Date.now();
+            timer = setInterval(updateTimer, 1000);
+            generateMaze();
+            drawMaze();
+        }
+
+        // 开始游戏
+        restartGame();
+    </script>
+</body>
+</html> 
