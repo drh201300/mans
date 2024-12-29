@@ -3,194 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赛车游戏</title>
-    <style>
-        .game-container {
-            width: 800px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        canvas {
-            background: #333;
-            margin: 20px 0;
-        }
-        .score {
-            font-size: 24px;
-            margin: 10px 0;
-            color: white;
-        }
-        .controls {
-            margin: 20px 0;
-        }
-    </style>
+    <title>3D赛车游戏</title>
+    <link rel="stylesheet" href="css/racing.css">
+    <!-- 使用 modulepreload 预加载关键模块 -->
+    <link rel="modulepreload" href="js/game/config.js">
+    <link rel="modulepreload" href="js/game/utils.js">
+    <!-- 使用 defer 延迟加载非关键脚本 -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
 </head>
-<body style="background: #000;">
-    <div class="game-container">
-        <h1 style="color: white;">赛车游戏</h1>
-        <div class="score">得分: <span id="score">0</span></div>
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
-        <div class="controls">
-            <button onclick="window.location.href='c.html'">返回首页</button>
-            <button onclick="restartGame()">重新开始</button>
+<body>
+    <!-- 加载界面 -->
+    <div id="loadingScreen" class="loading-screen">
+        <h2>加载中...</h2>
+        <div class="progress-bar">
+            <div id="progress" class="progress"></div>
         </div>
-        <p style="color: white;">使用方向键控制赛车，躲避其他车辆</p>
     </div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        const player = {
-            x: canvas.width / 2 - 20,
-            y: canvas.height - 100,
-            width: 40,
-            height: 70,
-            speed: 5
-        };
+    <!-- 游戏UI -->
+    <div id="gameUI">
+        <div>速度: <span id="speed">0</span> km/h</div>
+        <div>圈数: <span id="lap">0</span>/3</div>
+        <div>时间: <span id="time">00:00</span></div>
+        <div>最佳圈速: <span id="bestLap">--:--</span></div>
+        <div>当前排名: <span id="position">1</span>/8</div>
+    </div>
 
-        const roadWidth = 300;
-        const laneWidth = roadWidth / 3;
-        const roadX = (canvas.width - roadWidth) / 2;
+    <!-- 小地图 -->
+    <canvas id="minimap" class="minimap"></canvas>
 
-        let score = 0;
-        let gameOver = false;
-        let obstacles = [];
-        let animationId;
+    <!-- 车辆状态 -->
+    <div class="car-stats">
+        <div>轮胎状态: <span id="tireHealth">100%</span></div>
+        <div>燃料: <span id="fuel">100%</span></div>
+        <div>引擎温度: <span id="engineTemp">正常</span></div>
+    </div>
 
-        // 创建障碍物
-        function createObstacle() {
-            const lane = Math.floor(Math.random() * 3);
-            const x = roadX + lane * laneWidth + (laneWidth - 40) / 2;
-            obstacles.push({
-                x: x,
-                y: -70,
-                width: 40,
-                height: 70,
-                speed: 3 + Math.random() * 2
-            });
-        }
+    <div id="tutorial" class="tutorial">
+        方向键控制方向，空格刹车，Shift加速
+    </div>
+    <div id="levelSelect">
+        <h2>选择关卡</h2>
+        <button class="level-btn" onclick="startLevel(1)">新手教程</button>
+        <button class="level-btn" onclick="startLevel(2)">城市赛道</button>
+        <button class="level-btn" onclick="startLevel(3)">山地越野</button>
+        <button class="level-btn" onclick="startLevel(4)">沙漠挑战</button>
+    </div>
 
-        // 移动障碍物
-        function moveObstacles() {
-            obstacles = obstacles.filter(obstacle => {
-                obstacle.y += obstacle.speed;
-                return obstacle.y < canvas.height;
-            });
+    <!-- 使用 type="module" 启用模块化 -->
+    <script type="module">
+        import { CONFIG } from './js/game/config.js';
+        import { Utils } from './js/game/utils.js';
+        import { AudioManager } from './js/game/audio.js';
+        import { Renderer } from './js/game/renderer.js';
+        import { PhysicsEngine } from './js/game/physics.js';
 
-            // 随机生成新的障碍物
-            if (Math.random() < 0.02) {
-                createObstacle();
-            }
-        }
+        // 使用 WeakMap 存储私有变量
+        const privateProps = new WeakMap();
 
-        // 碰撞检测
-        function checkCollision(rect1, rect2) {
-            return rect1.x < rect2.x + rect2.width &&
-                   rect1.x + rect1.width > rect2.x &&
-                   rect1.y < rect2.y + rect2.height &&
-                   rect1.y + rect1.height > rect2.y;
-        }
-
-        // 绘制道路
-        function drawRoad() {
-            // 道路背景
-            ctx.fillStyle = '#666';
-            ctx.fillRect(roadX, 0, roadWidth, canvas.height);
-
-            // 道路分界线
-            ctx.strokeStyle = '#fff';
-            ctx.setLineDash([20, 20]);
-            ctx.beginPath();
-            ctx.moveTo(roadX + laneWidth, 0);
-            ctx.lineTo(roadX + laneWidth, canvas.height);
-            ctx.moveTo(roadX + laneWidth * 2, 0);
-            ctx.lineTo(roadX + laneWidth * 2, canvas.height);
-            ctx.stroke();
-        }
-
-        // 绘制玩家
-        function drawPlayer() {
-            ctx.fillStyle = '#f00';
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-        }
-
-        // 绘制障碍物
-        function drawObstacles() {
-            ctx.fillStyle = '#00f';
-            obstacles.forEach(obstacle => {
-                ctx.fillRect(obstacle.x, obstacle.y, 
-                           obstacle.width, obstacle.height);
-            });
-        }
-
-        // 游戏循环
-        function gameLoop() {
-            if (!gameOver) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                drawRoad();
-                drawPlayer();
-                drawObstacles();
-                moveObstacles();
-
-                // 碰撞检测
-                obstacles.forEach(obstacle => {
-                    if (checkCollision(player, obstacle)) {
-                        gameOver = true;
-                        alert(`游戏结束！得分：${score}`);
-                        cancelAnimationFrame(animationId);
-                        return;
-                    }
+        class Game {
+            constructor() {
+                // 初始化私有属性
+                privateProps.set(this, {
+                    lastTime: performance.now(),
+                    isRunning: false,
+                    frameCount: 0
                 });
 
-                // 更新分数
-                score++;
-                document.getElementById('score').textContent = score;
+                // 初始化系统
+                this.audio = new AudioManager();
+                this.renderer = new Renderer(document.querySelector('canvas'));
+                this.physics = new PhysicsEngine();
 
-                animationId = requestAnimationFrame(gameLoop);
+                // 使用 ResizeObserver 监听画布大小变化
+                this.resizeObserver = new ResizeObserver(Utils.throttle(() => {
+                    this.handleResize();
+                }, 250));
+
+                // 性能监控
+                if (CONFIG.DEBUG) {
+                    this.stats = new Stats();
+                    document.body.appendChild(this.stats.dom);
+                }
+
+                // 事件委托
+                document.addEventListener('click', this.handleGlobalClick.bind(this));
+                
+                // 使用 requestIdleCallback 延迟加载非关键资源
+                requestIdleCallback(() => {
+                    this.loadNonCriticalAssets();
+                });
+            }
+
+            async init() {
+                try {
+                    await Promise.all([
+                        this.audio.loadSound('engine', 'sounds/engine.mp3'),
+                        this.audio.loadSound('crash', 'sounds/crash.mp3')
+                    ]);
+
+                    this.start();
+                } catch (error) {
+                    console.error('Game initialization failed:', error);
+                }
+            }
+
+            start() {
+                const props = privateProps.get(this);
+                props.isRunning = true;
+                this.gameLoop();
+            }
+
+            gameLoop() {
+                const props = privateProps.get(this);
+                if (!props.isRunning) return;
+
+                const now = performance.now();
+                const delta = (now - props.lastTime) / 1000;
+                props.lastTime = now;
+
+                // 更新游戏状态
+                this.update(delta);
+
+                // 使用 requestAnimationFrame
+                requestAnimationFrame(() => this.gameLoop());
+
+                if (CONFIG.DEBUG) {
+                    this.stats.update();
+                }
+            }
+
+            update(delta) {
+                // 使用 Web Workers 处理复杂计算
+                if (this.physicsWorker) {
+                    this.physicsWorker.postMessage({
+                        type: 'update',
+                        delta
+                    });
+                } else {
+                    this.physics.update(delta);
+                }
+
+                // 更新渲染
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            handleResize() {
+                // 实现响应式调整
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                // 更新相机参数
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+            }
+
+            handleGlobalClick(event) {
+                // 事件委托处理点击
+                const target = event.target;
+                if (target.matches('.level-btn')) {
+                    const level = target.dataset.level;
+                    this.startLevel(level);
+                }
+            }
+
+            dispose() {
+                // 清理资源
+                this.resizeObserver.disconnect();
+                this.renderer.dispose();
+                this.audio.context.close();
+                if (this.physicsWorker) {
+                    this.physicsWorker.terminate();
+                }
             }
         }
 
-        // 键盘控制
-        document.addEventListener('keydown', (e) => {
-            if (gameOver) return;
+        // 启动游戏
+        const game = new Game();
+        game.init().catch(console.error);
 
-            switch(e.key) {
-                case 'ArrowLeft':
-                    if (player.x > roadX) {
-                        player.x -= player.speed;
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (player.x < roadX + roadWidth - player.width) {
-                        player.x += player.speed;
-                    }
-                    break;
-                case 'ArrowUp':
-                    if (player.y > 0) {
-                        player.y -= player.speed;
-                    }
-                    break;
-                case 'ArrowDown':
-                    if (player.y < canvas.height - player.height) {
-                        player.y += player.speed;
-                    }
-                    break;
+        // 处理页面可见性变化
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                game.pause();
+            } else {
+                game.resume();
             }
         });
 
-        function restartGame() {
-            player.x = canvas.width / 2 - 20;
-            player.y = canvas.height - 100;
-            obstacles = [];
-            score = 0;
-            gameOver = false;
-            document.getElementById('score').textContent = score;
-            gameLoop();
-        }
-
-        // 开始游戏
-        gameLoop();
+        // 清理函数
+        window.addEventListener('beforeunload', () => {
+            game.dispose();
+        });
     </script>
 </body>
 </html> 
